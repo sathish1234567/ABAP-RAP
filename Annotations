@@ -1,0 +1,101 @@
+1. CDS Data Model Annotations
+
+Used in CDS view entities to define data exposure, access control, and OData behavior.
+
+Annotation	Purpose / Description
+@AbapCatalog.sqlViewName	Defines the technical SQL view name (for DDIC).
+@AbapCatalog.compiler.compareFilter	Optimizes view performance for filters.
+@EndUserText.label	Provides a human-readable label for the CDS entity.
+@AccessControl.authorizationCheck: #CHECK	Enables authorization via CDS role objects (DCL).
+@Metadata.ignorePropagatedAnnotations	Ignores propagated metadata from associations.
+@ObjectModel.modelCategory	Defines if it’s a business object or analytical view.
+@ObjectModel.representativeKey	Defines key fields representing the entity.
+@ObjectModel.transactionalProcessingEnabled: true	Allows transactional operations (create, update, delete).
+@ObjectModel.createEnabled: true	Enables create operation for the entity.
+@ObjectModel.updateEnabled: true	Enables update operation for the entity.
+@ObjectModel.deleteEnabled: true	Enables delete operation for the entity.
+@ObjectModel.readOnly: true	Marks the entity as read-only.
+@ObjectModel.text.association	Links an entity field to a text table for description.
+@ObjectModel.foreignKey.association	Defines a foreign key relationship.
+@OData.publish: true	Publishes the entity as an OData service automatically.
+@OData.entitySet.name	Sets a custom OData entity set name.
+@Semantics.amount.currencyCode	Marks a currency relationship for amount fields.
+@Semantics.quantity.unitOfMeasure	Marks a UoM relationship for quantity fields.
+@Search.defaultSearchElement: true	Marks a field as searchable in Fiori UI.
+@Search.fuzzinessThreshold	Configures fuzzy search tolerance.
+⚙️ 2. Behavior Definition (BDEF) Annotations
+
+Used in the behavior definition file to describe how the entity behaves (CRUD, locking, draft, etc.)
+
+Annotation / Keyword	Purpose / Description
+managed / unmanaged	Defines whether the RAP BO is handled automatically (managed) or manually (unmanaged).
+implementation in class zbp_...	Links to the ABAP behavior pool class.
+strict (2)	Enforces stricter RAP syntax rules (recommended).
+lock master	Activates automatic locking for the root entity.
+authorization master (instance)	Enables authorization handling at instance level.
+etag master	Enables optimistic locking and concurrency control.
+create; update; delete;	Declares supported CRUD operations.
+association _<assoc_name>	Allows operations on related entities.
+draft;	Enables draft handling for the BO.
+validation	Adds custom data validation logic.
+determination	Triggers automatic data enrichment logic.
+mapping for	Maps fields between CDS and persistence.
+field (readonly)	Makes a field read-only in the behavior context.
+field (mandatory)	Requires a value on create/update.
+field (update)	Allows updating the field during modify.
+action <action_name>	Defines custom actions for the BO.
+static action	Declares an action not tied to a specific instance.
+🎨 3. UI Annotations (Fiori Elements)
+
+Used to define how data appears in Fiori apps — list reports, object pages, etc.
+
+Annotation	Purpose / Description
+@UI.headerInfo	Defines the object title and subtitle in the header area.
+@UI.facet	Creates sections (tabs, forms) in the Fiori Object Page.
+@UI.lineItem	Defines columns in the List Report table.
+@UI.identification	Defines fields in the Object Page (main form).
+@UI.selectionField	Defines filter fields for the list report.
+@UI.dataPoint	Displays KPI or key data value.
+@UI.chart	Configures chart representation (type, measures, dimensions).
+@UI.fieldGroup	Groups fields together in UI forms.
+@UI.hidden: true	Hides the field from the Fiori view.
+@UI.textArrangement	Defines whether code/text or text/code is displayed.
+@UI.importance	Sets field visibility level (HIGH, MEDIUM, LOW).
+@UI.createHidden	Hides field during creation.
+🔐 4. Authorization & Control Annotations
+Annotation	Purpose / Description
+@AccessControl.authorizationCheck: #CHECK	Enforces CDS access control (DCL).
+@AccessControl.personalData.blocking	Used in GDPR scenarios to block personal data.
+@AbapCatalog.buffering.allow	Enables table/view buffering.
+@AbapCatalog.buffering.numberOfKeyFields	Defines key fields for buffering.
+@ObjectModel.transactionalProcessingDelegated	Delegates transactional handling to another BO.
+@ObjectModel.dataCategory	Defines type of data model (transactional, analytical, master).
+🌐 5. Service Definition / Binding Annotations
+Annotation	Purpose / Description
+@OData.publish: true	Automatically generates an OData service.
+@EndUserText.label	Descriptive text for OData entity.
+@Metadata.allowExtensions: true	Allows metadata extension for the entity.
+@Consumption.derivation: {}	Defines derivation rules for consumption views.
+@Metadata.allowExtensions: true	Enables extension by partners or customers.
+🧠 Example: RAP with Key Annotations
+@EndUserText.label: 'Customer Entity'
+@AccessControl.authorizationCheck: #CHECK
+@ObjectModel.transactionalProcessingEnabled: true
+@OData.publish: true
+@UI.headerInfo: { typeName: 'Customer', title: { value: 'CustomerName' } }
+@UI.lineItem: [ { position: 10, value: 'CustomerName', label: 'Customer' },
+                { position: 20, value: 'City', label: 'City' } ]
+define view entity ZC_Customer as select from kna1 {
+  key kunnr as CustomerID,
+  name1 as CustomerName,
+  ort01 as City,
+  land1 as Country
+}
+
+🧾 Summary Table by Layer
+Layer	Example Annotations	Purpose
+CDS / Data Model	@OData.publish, @ObjectModel.*, @EndUserText.label	Define structure and expose data
+Behavior Definition	create; update; delete;, field (readonly), lock master	Define logic and transactional behavior
+UI (Fiori)	@UI.lineItem, @UI.headerInfo, @UI.selectionField	Define look & feel for Fiori Elements
+Security / Access	@AccessControl.authorizationCheck	Enable DCL-based authorization
+Service Binding	@OData.publish	Expose as REST/OData service

@@ -1,0 +1,149 @@
+Perfect! Here’s a step-by-step end-to-end example of uploading a file using SAP RAP with a UI5 frontend. I’ll keep it clear and practical.
+
+1️⃣ Backend: RAP Setup
+a) Database Table
+
+Create a custom table ZATTACHMENT with columns:
+
+Field	Type	Notes
+ATTACHMENT_ID	CHAR 10	Primary Key
+FILE_NAME	CHAR 255	Name of file
+MIME_TYPE	CHAR 50	MIME type
+FILE_CONTENT	RAWSTRING	Binary content
+CREATED_BY	CHAR 12	User
+CREATED_AT	DATS	Creation date
+b) CDS Entity (View)
+@EndUserText.label: 'Attachment Entity'
+define root view entity ZI_ATTACHMENT
+  as select from zattachment
+{
+  key attachment_id as AttachmentId,
+      file_name     as FileName,
+      mime_type     as MimeType,
+      file_content  as FileContent,
+      created_by    as CreatedBy,
+      created_at    as CreatedAt
+}
+
+c) Behavior Definition (BDEF)
+managed implementation in class ZBP_ATTACHMENT unique;
+strict (2);
+
+define behavior for ZI_ATTACHMENT alias Attachment
+persistent table zattachment
+lock master
+authorization master ( instance )
+{
+  create;
+  update;
+  delete;
+}
+
+d) Behavior Implementation (BPOC)
+CLASS zbp_attachment DEFINITION PUBLIC FINAL CREATE PUBLIC.
+  PUBLIC SECTION.
+    INTERFACES if_abap_behavior_handler.
+ENDCLASS.
+
+CLASS zbp_attachment IMPLEMENTATION.
+
+  METHOD if_abap_behavior_handler~create.
+    LOOP AT entities INTO DATA(entity).
+      INSERT zattachment FROM @entity.
+    ENDLOOP.
+  ENDMETHOD.
+
+ENDCLASS.
+
+e) Service Definition & Binding
+define service ZI_ATTACHMENT_SRV {
+  expose ZI_ATTACHMENT as Attachment;
+}
+
+
+Activate the service definition.
+
+Create a service binding (OData V4).
+
+Activate → endpoint ready.
+
+2️⃣ Frontend: UI5 File Upload
+a) View (XML)
+<mvc:View
+  controllerName="myApp.controller.Upload"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m">
+  <VBox class="sapUiSmallMargin">
+    <FileUploader
+      id="fileUploader"
+      name="file"
+      uploadUrl=""
+      width="400px"
+      change="onFileChange"
+      placeholder="Choose a file" />
+    <Button
+      text="Upload"
+      press="onUploadPress" />
+  </VBox>
+</mvc:View>
+
+b) Controller (JS)
+sap.ui.define([
+  "sap/ui/core/mvc/Controller",
+  "sap/base/Log"
+], function(Controller, Log) {
+  "use strict";
+
+  return Controller.extend("myApp.controller.Upload", {
+
+    onFileChange: function(oEvent) {
+      var file = oEvent.getParameter("files")[0];
+      this._file = file;
+    },
+
+    onUploadPress: function() {
+      if (!this._file) {
+        sap.m.MessageToast.show("Please select a file first!");
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var base64Content = e.target.result.split(",")[1];
+
+        var payload = {
+          FileName: this._file.name,
+          MimeType: this._file.type,
+          FileContent: base64Content
+        };
+
+        var sUrl = "/sap/opu/odata/sap/ZI_ATTACHMENT_SRV/AttachmentSet";
+        $.ajax({
+          url: sUrl,
+          method: "POST",
+          data: JSON.stringify(payload),
+          contentType: "application/json",
+          success: function() {
+            sap.m.MessageToast.show("File uploaded successfully!");
+          },
+          error: function(err) {
+            Log.error(err);
+            sap.m.MessageToast.show("Upload failed!");
+          }
+        });
+      }.bind(this);
+
+      reader.readAsDataURL(this._file);
+    }
+  });
+});
+
+✅ Key Notes
+
+File is converted to Base64 before sending to RAP.
+
+FileContent is stored as RAWSTRING in the database.
+
+UI5 can be extended with progress bar, multiple file upload, or drag-and-drop.
+
+For large files (> 1 MB), consider chunked upload or storing externally (DMS/BTP).

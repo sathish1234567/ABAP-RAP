@@ -1,0 +1,185 @@
+1️⃣ Understanding RAP Layers
+
+RAP is divided into:
+
+CDS Data Model (View Entity) – defines data exposure
+
+Behavior Definition (BDEF) – defines CRUD/draft/validation logic
+
+Behavior Implementation (BIMP) – contains ABAP class methods where you write logic
+
+Service Definition/Binding – exposes the object as OData service
+
+👉 You can only call Function Modules (FMs) inside the behavior implementation class (BIMP) methods — not in CDS or BDEF layers.
+
+🧩 2️⃣ Example Scenario
+
+Let’s say you have a custom Function Module:
+
+FUNCTION zswap_mat_post.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     VALUE(I_SITE) TYPE WERKS_D
+*"     VALUE(I_SLOC) TYPE LGORT_D
+*"     VALUE(IT_ITEM) TYPE ZTT_JC2JC_POST_ITEM
+*"  EXPORTING
+*"     VALUE(ET_RETURN) TYPE BAPIRET2_T
+*"----------------------------------------------------------------------
+ENDFUNCTION.
+
+
+You want to call this FM from your RAP behavior (for example, during create or action execution).
+
+🧰 3️⃣ Create RAP Business Object (Example)
+
+CDS View Entity
+
+@EndUserText.label: 'Inventory Transfer Entity'
+@OData.publish: true
+define root view entity ZI_InvTransfer
+  as select from zinv_transfer {
+    key matnr,
+    werks,
+    lgort,
+    labst
+  }
+
+
+Behavior Definition (BDEF)
+
+managed implementation in class zbp_inv_transfer unique;
+strict (2);
+
+define behavior for ZI_InvTransfer alias InvTransfer
+persistent table zinv_transfer
+lock master
+etag master
+{
+  create;
+  update;
+  delete;
+
+  action transferInventory result [1] $self;
+}
+
+⚙️ 4️⃣ Behavior Implementation Class (BIMP)
+
+This is where you write ABAP logic and call your custom FM.
+
+Class Definition
+
+CLASS zbp_inv_transfer DEFINITION PUBLIC FINAL CREATE PUBLIC.
+  PUBLIC SECTION.
+    INTERFACES if_abap_behavior_handler.
+ENDCLASS.
+
+
+Class Implementation
+
+CLASS zbp_inv_transfer IMPLEMENTATION.
+
+  METHOD transferInventory.
+    DATA: lt_items   TYPE ztt_jc2jc_post_item,
+          lt_return  TYPE bapiret2_t,
+          ls_data    TYPE STRUCTURE FOR ZI_InvTransfer.
+
+    "Loop over entities selected by RAP
+    LOOP AT keys ASSIGNING FIELD-SYMBOL(<key>).
+
+      READ ENTITY ZI_InvTransfer FROM VALUE #( ( matnr = <key>-matnr ) )
+      RESULT DATA(ls_transfer).
+
+      "Prepare input data for Function Module
+      APPEND VALUE #( 
+          materialnum = ls_transfer-matnr
+          plant       = ls_transfer-werks
+          qty         = ls_transfer-labst
+      ) TO lt_items.
+
+      "Call your custom FM
+      CALL FUNCTION 'ZSWAP_MAT_POST'
+        EXPORTING
+          i_site  = ls_transfer-werks
+          i_sloc  = ls_transfer-lgort
+          it_item = lt_items
+        IMPORTING
+          et_return = lt_return.
+
+      "Handle return messages
+      LOOP AT lt_return ASSIGNING FIELD-SYMBOL(<msg>).
+        IF <msg>-type = 'E'.
+          APPEND VALUE #( %msg = new_message_with_text( <msg>-message ) ) TO reported-invtransfer.
+        ENDIF.
+      ENDLOOP.
+
+    ENDLOOP.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+
+✅ Explanation:
+
+The transferInventory RAP action triggers when user calls the action from Fiori/UI or API.
+
+Inside that action, we:
+
+Read the entity data (READ ENTITY)
+
+Map it to FM input parameters
+
+Call the custom FM
+
+Return messages or update results
+
+🔄 5️⃣ When Else Can You Call a FM?
+
+You can call a Function Module in:
+
+RAP Method Type	Purpose	Example Usage
+create / update / delete	To run validation or enrich data during persistence	e.g., call FM to check plant status
+action <name>	To execute custom logic (posting, approvals, etc.)	e.g., action transferInventory
+determination	To auto-fill values after modification	e.g., FM to calculate derived fields
+validation	To verify data before save	e.g., FM to check stock availability
+🚨 6️⃣ Important Best Practices
+
+✅ Do
+
+Always handle exceptions from FM using TRY...CATCH or message handling (BAPIRET2_T).
+
+Map FM messages to RAP reported table so Fiori shows messages properly.
+
+Use only remote-enabled or stable FMs (no direct database commits inside FMs).
+
+Prefer wrapping legacy FMs into ABAP classes or APIs for cleaner structure.
+
+🚫 Don’t
+
+Call COMMIT WORK inside the FM; RAP controls transaction boundaries.
+
+Modify the database outside of the RAP framework (may cause lock/commit issues).
+
+Use obsolete FMs that conflict with RAP-managed persistence.
+
+🧠 Example Message Mapping
+APPEND VALUE #( %msg = new_message(
+    id = <msg>-id
+    number = <msg>-number
+    severity = CONV #( <msg>-type )
+    v1 = <msg>-message_v1
+    v2 = <msg>-message_v2
+) ) TO reported-invtransfer.
+
+
+This ensures FM error messages appear in the Fiori/UI log.
+
+✅ Summary
+Step	Description
+1️⃣	Define CDS entity for your object
+2️⃣	Define BDEF (Behavior Definition)
+3️⃣	Implement logic in BIMP class
+4️⃣	Call FM inside action, create, or determination method
+5️⃣	Handle messages properly
+6️⃣	Avoid direct commits; let RAP manage transactions

@@ -1,0 +1,25 @@
+RAP-Syllabus:
+
+CDS View:
+1. Design simple and advanced database optimized applications with Application programming
+2. Understand the important concepts in development like CDS views, AMDP, ADBC, Performance tooling, performance improvement, information modeling (Calculation views), SQL Scripts, CDS Analytics, CDS Security, CDS Table Functions, OData services using CDS views, CDS Programming with Annotations to create UX and smart apps.
+3. Install Develop Environment, Studio and Development Tools (on Eclipse)
+4. Detect and analyze the performance of your coding using SQLM, SQLT, SCI, ATC
+5. Integrate native database objects using View Proxy, AMDP, ADBC
+
+6. Learn S4 Programming paradigm with new programming model using @UI annotations, end to end S4 POC
+
+7. CDS Hierarchy concept with end to end POC on TREE table
+
+8. OIA scenario end to end with development and performance improvement
+
+9. Create Smart apps using WebIDE fulls tack and OData based on CDS views
+
+10. Adoption of custom code with S4 simplified DB design MATDOC, BSEG, etc... - Simplification Database
+
+11. Using Advance DB features like IDA with ALV, Fuzzy search
+
+12. New SQL syntax with NW 7.5 and S4 conversion guide 1909
+
+Enhanced Open SQL, Defining advanced views using Core Data Services (CDS), and CDS Associations. Incorporating Authorization Checks with CDS, Transport of HTC Objects (HTC and HTA) Using Full Text Search in, Enabling input fields for type-ahead search, List Viewer (ALV) optimized for New DB
+

@@ -17,10 +17,132 @@ if lt_failed is initial.
     out->write(' Not updated ')
    endif.
 endif.
-      
+
+
+Debugging: toggle bresk point- session break point- active..
+press f9 to execute -- it will stop cursor at toggle break point.
 
 %cid sshould map to the key fields.- it is mandatory- when create the data.
 need to fill the %control structure: means what all are the fields i have to update this data into my database table which tells you to the control structure.
                   |_ assign value on/off --> %control = if_abap_behv=>mk~on   - whenever commit with this enity to insert the record.
                   |_ %control = value #( travelId = if_abap_behv=>mk~on status = if_abap_behv=>mk~on)
                   |_ Which fields we need to update in db - fields = ON- field1 will update field2 = off -not update.
+
+For multiple reccords:
+____________________
+modify enities of zr_dbt_Trav entity r_rbt_trav
+create feilds( travelId status )
+with value #( ( %cid = 'Travel_001' travelId= '000000001' status = 'S' 
+      %control = value #(travelID = if_abap_behv=>mk~on status = if_abap_behv=>mk~on ) )
+( %cid = 'Travel_002' travelId= '000000002' status = 'S' 
+      %control = value #(travelID = if_abap_behv=>mk~on status = if_abap_behv=>mk~on ) )
+)
+      reported data(lt_Reported)
+      failed data(lt_failed). " successfule - lt_failed is blank
+if lt_failed is initial.
+   commit enitties.
+   if sy-subrc eq 0.
+      out->write('data updated successfully').
+  else.
+    out->write(' Not updated ')
+   endif.
+endif.
+
+
+Insreting the data from workarea/ intenral table
+____________________________________________________
+lets prepare intenral table :
+data lt_travel_create type table for create zr_dbt_tav.
+lt_travel_create = value #( ( travelid = '000000005' status 'A') ( travelid = '000000006' status 'B'))
+
+here we have not filled - %cid -- here auto %cid will do means - framework will handle during the internal table will fill..
+
+modify enities of zr_dbt_Trav entity r_rbt_trav 
+create auto fill cid feilds( travelId status )
+with lt_trav_Create
+      reported data(lt_Reported)
+      failed data(lt_failed). " successfule - lt_failed is blank
+if lt_failed is initial.
+   commit enitties.
+   if sy-subrc eq 0.
+      out->write('data updated successfully').
+  else.
+    out->write(' Not updated ')
+   endif.
+endif.
+_______________________Create complete_____________________________
+
+
+update operation: eml
+____________________
+
+modify enitiies of zr_dbt_trav entity r_dbt_trav update fields (Status )
+with value #( ( travelId = '0000000003' status = 'A') 
+      reported data(lt_Reported)
+      failed data(lt_failed). " successfule - lt_failed is blank
+if lt_failed is initial.
+   commit enitties.
+   if sy-subrc eq 0.
+      out->write('data updated successfully').
+  else.
+    out->write(' Not updated ')
+   endif.
+endif.
+
+with internal table: 
+data lt_travel_update type table for update zr_dbt_trav.
+lt_travel_update = value #( ( travelid = '0000000003' status = 'R') ).
+
+modify enitiies of zr_dbt_trav entity r_dbt_trav update fields (Status )
+with lt_travel_update
+      reported data(lt_Reported)
+      failed data(lt_failed). " successfule - lt_failed is blank
+if lt_failed is initial.
+   commit enitties.
+   if sy-subrc eq 0.
+      out->write('data updated successfully').
+  else.
+    out->write(' Not updated ')
+   endif.
+endif.
+_________________update - eml completed --------------------
+
+
+________________________________________________________________
+
+Delete eml :
+____________
+modify entiees of zr_dbt_Trav entity r_dbt_trav delete from value #( ( 0000000001 ) )
+      reported data(lt_Reported)
+      failed data(lt_failed). " successfule - lt_failed is blank
+if lt_failed is initial.
+   commit enitties.
+   if sy-subrc eq 0.
+      out->write('data updated successfully').
+  else.
+    out->write(' Not updated ')
+   endif.
+endif.
+
+with intenral table:
+
+DATA lt_delete TYPE TABLE FOR DELETE zi_your_root_alias.
+DATA lt_delete TYPE TABLE FOR DELETE zi_your_root_alias.
+" Fill keys of rows to delete (example with UUID-style key)
+lt_delete = VALUE #(
+  ( %tky = ls_existing_row-%tky )
+  ( %tky = ls_other_row-%tky )
+).
+
+modify entiees of zr_dbt_Trav entity r_dbt_trav delete from 
+lt_Delete
+      reported data(lt_Reported)
+      failed data(lt_failed). " successfule - lt_failed is blank
+if lt_failed is initial.
+   commit enitties.
+   if sy-subrc eq 0.
+      out->write('data updated successfully').
+  else.
+    out->write(' Not updated ')
+   endif.
+endif.

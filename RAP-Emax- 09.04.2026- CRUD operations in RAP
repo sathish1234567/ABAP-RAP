@@ -1,1 +1,26 @@
+Create operation using EML:
+_______________________________
+CRUD- We are modifying the exist enities.
+modify perform on root entity:
 
+modify enities of zr_dbt_Trav entity r_rbt_trav
+create feilds( travelId status )
+with value #( ( %cid = 'Travel_001' travelId= '000000001' status = 'S' 
+      %control = value #(travelID = if_abap_behv=>mk~on status = if_abap_behv=>mk~on ) ) )
+      reported data(lt_Reported)
+      failed data(lt_failed). " successfule - lt_failed is blank
+if lt_failed is initial.
+   commit enitties.
+   if sy-subrc eq 0.
+      out->write('data updated successfully').
+  else.
+    out->write(' Not updated ')
+   endif.
+endif.
+      
+
+%cid sshould map to the key fields.- it is mandatory- when create the data.
+need to fill the %control structure: means what all are the fields i have to update this data into my database table which tells you to the control structure.
+                  |_ assign value on/off --> %control = if_abap_behv=>mk~on   - whenever commit with this enity to insert the record.
+                  |_ %control = value #( travelId = if_abap_behv=>mk~on status = if_abap_behv=>mk~on)
+                  |_ Which fields we need to update in db - fields = ON- field1 will update field2 = off -not update.

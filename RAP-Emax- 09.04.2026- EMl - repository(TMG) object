@@ -76,6 +76,7 @@ generated objects automatically are
 --> once all generated -- click on binding and service need to publish -- so click on publish.
 --> once published -- now test it
 
+-- draft functionality available in RAP only...
 
 
 --> this is only applicable for single table only... like tmg.
@@ -84,3 +85,68 @@ generated objects automatically are
 What is metadata extenstions: 
 while creating a projection view.. whatever ui elements annotation we are maintaing in projection view . - this is the optional.
 if you want to maintain the ui annotation in specific file -- this we have to go with the metadata extentions file  
+
+EML- Entity Manipulation Language
+__________________________________________________________________________________
+
+it allows the data content of rap BO to read and modify.
+in RAP-- 99% applications - this EML will be used.
+
+read the BO data and modify BO data what is so ever the operations CRUD 
+
+validations/determinations/cumstom actions and Buttons - .. etc -- all topics eml will be used...
+
+ 3 common parametes which is vailable:
+1. faileD - If creation fails(duplicate key, invalid key value), table contains the %cid and corresponding reason why it got failed to perform operations.
+2. mapped  - maps the temporary keys to the actual keys during create
+          Ex: performing create operation- one paramenter- %cid will generate - automatically generates- what ever temporary got created, you have to map that actual key.- which is got from auto generations.
+          %cid - content id  temporary id - perform on create operation only
+               - once record successfully created - mapped to the temporary to newly created record.
+3. reported - table contains to return the any type of the messsage will stored here..send back the insormation wither success/fail... USING %MDSG
+
+What is %msg: ?
+_______________
+What %msg is
+In RAP, %msg is a special component on the failed and reported result structures (and sometimes on mapped results, depending on API version). 
+You use it to attach one message instance (T100, message class, or text) to a specific row (identified by %tky / keys),
+so the runtime can show it in the UI or log it consistently.
+
+It is not a normal database field; it exists only on these control structures returned from MODIFY, READ, etc.
+
+Where it appears
+Context	Role of %msg
+failed-<node>	- table containsExplains why an instance failed (validation error, lock, authority, etc.).
+reported-<node>	- tables contains Informational or warning messages and error messages returned by the BO logic during process..
+
+%msg - return to ui level.- to pass the %msg message, we need reported parameter.
+Together with %tky-	Links the message to the exact business object instance (or key
+
+Typical pattern: you fill %tky (or the key fields, depending on your template) and %msg so the framework knows which row the message belongs to.
+
+How messages are created (conceptually):
+_______________________________________
+You usually assign %msg an object that implements the RAP message interface (commonly IF_ABAP_BEHV_MESSAGE) — 
+for example via cl_abap_behv_message (or cl_abap_behv_message_factory / new_message_with_text-style APIs, depending on release).
+
+CONNCEPTUALLY:
+
+" Pseudocode – pattern only; exact factory/API depends on your release
+reported-Travel = VALUE #(
+  (
+    %tky     = <travel_tky>
+    %msg     = cl_abap_behv_message=>create_t100( ... )  " or new_message_with_text( ... )
+  )
+).
+
+(Exact class/method names and whether you use %tky vs. key fields follow your behavior definition and ABAP release.)
+Mental model
+Piece	- Meaning
+%tky	- Which instance.
+%msg	- What to tell the user about that instance.
+failed vs reported	- Error/stop vs info/warning (semantics differ; both can carry %msg).
+
+Practical notes:
+_________
+Prefer T100 or message class messages for translation and consistency; ad-hoc text is possible but weaker for prod.
+%msg is about RAP message propagation to the UI/OData layer — it is not a replacement for business logic; you still set failed when the operation must not succeed.
+How come user will know- travel status - failed.. 

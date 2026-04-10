@@ -9,6 +9,15 @@ RAP- framework automatically all the rap steps-- not required anything manually.
 
 1. need database table
 2. we need four fields are mandatory - in that need to have timestamp fields( lastchangedat : timestampl;) --> why ? -->
+   mandatory fields for rap draft functionality/ for generate reqpository object:
+   lastchangedat : timestampl;
+   lastchangedby : syuname;
+   createdby : syuname
+   createdat : timestampl
+   these fields are availble in any admin table/ view.
+
+  if add above fields then it will allow to create rap else through the error.
+  
    when the rap has generated all the above objects and also generates with the draft handling functionality also generates by rap framework itself.
    What is the draft handling? - means- from the ui level, i am assigning data to each field tavel id and status.. etc... but i am not going into save phase. 
    --> save phase will trigger when click on the save and again return back to the fiori app.
@@ -38,10 +47,40 @@ define table zdbt_Trav{
   status : /dmo/travel_status
 
 // timestampe fields
+   
    lastchangedat : timestampl;
+   lastchangedby : syuname;
+   createdby : syuname
+   createdat : timestampl
 }
 
 Now create the rap applicaation -- right click on table -- click on generate abap repository objects. 
   Here we have 2 options.
     1. Odata ui Service : Fiori app + api
     2. OData Web api service - only api -- it will be consumed in third party systems..
+
+Here select --Odata ui service ---> click on next button --> if everything fine --> ask the pacakge (provide)
+--> next screen -- it will provide rap generated naming convention for every object.. if it is not required.. please select and change it
+    but we can't change the binding type.
+    click on next button
+--> in next screen - you will able to see the rap objects with names -- check it --> clikc on next button..
+--> finish.
+--> it will take time.. to generated.
+allthose things are create and it will add..
+
+generated objects automatically are 
+1. draft tatble
+2. lock object using etag .. etc..
+
+
+--> once all generated -- click on binding and service need to publish -- so click on publish.
+--> once published -- now test it
+
+
+
+--> this is only applicable for single table only... like tmg.
+-
+
+What is metadata extenstions: 
+while creating a projection view.. whatever ui elements annotation we are maintaing in projection view . - this is the optional.
+if you want to maintain the ui annotation in specific file -- this we have to go with the metadata extentions file  

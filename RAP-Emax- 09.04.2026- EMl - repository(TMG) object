@@ -150,3 +150,52 @@ _________
 Prefer T100 or message class messages for translation and consistency; ad-hoc text is possible but weaker for prod.
 %msg is about RAP message propagation to the UI/OData layer — it is not a replacement for business logic; you still set failed when the operation must not succeed.
 How come user will know- travel status - failed.. 
+
+Commit enitites:
+_________________
+saving of the data must be triggered by the commit enitites.
+unless commit entity is triggered data is saved in transactional buffer.
+
+read data: using root entity:
+______________________
+for single record used key fields.:
+
+read enities of zr_dbt_trav entity r_rbt_trav
+all fields with value #((travelid='0000000001'))
+result data(lt_result) //suuccess- inserted data
+failed data(lt_failed)// failed adata
+reported data(lt_Reported)
+
+out->write( lt_Result ).
+
+multiple records to read:
+__________________________
+read enities of zr_dbt_trav entity r_rbt_trav
+all fields with value #((travelid='0000000001)' (travelID='0000000002'))
+result data(lt_result) //suuccess- inserted data
+failed data(lt_failed)// failed adata
+reported data(lt_Reported)
+
+out->write(lt_result)
+
+____________________________
+
+for specific fields:
+
+read enities of zr_dbt_trav entity r_rbt_trav
+fields ( travelID status ) with value #((travelid='0000000001)' (travelID='0000000002'))
+result data(lt_result) //suuccess- inserted data
+failed data(lt_failed)// failed adata
+reported data(lt_Reported)
+
+out->write(lt_result) --> all fields come but data visible only on speceific fields only..
+
+without hardcoding can i get all the records?
+______________________________________________
+1. get all the key fields data from DB. -select travel_id from zbdt_trav into table @data(lt_keys)
+2. use this db data read enities to filter.
+read enities of zr_dbt_trav entity r_rbt_trav
+fields ( travelID status ) with value #(for ls_keys in lt_keys(travelId = ls_keys-travelId))
+result data(lt_result) //suuccess- inserted data
+failed data(lt_failed)// failed adata
+reported data(lt_Reported)

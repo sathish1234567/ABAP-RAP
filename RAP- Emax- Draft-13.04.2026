@@ -61,7 +61,110 @@ define root view entity ZBS_I_RAPPartner
       country          as Country,
       payment_currency as PaymentCurrency,
       last_changed_at  as LastChangedAt
+      
 }
 
 
+Behavior Definition:(Initial case)
+______________________
+managed implementation in class zbp_bs_demo_rappartner unique;
+strict;
 
+define behavior for ZBS_I_RAPPartner alias Partner
+persistent table zbs_dmo_partner
+lock master
+authorization master ( instance )
+{
+  create;
+  update;
+  delete;
+
+  mapping for zbs_dmo_partner
+  {
+    PartnerNumber = partner;
+    PartnerName = name;
+    Street = street;
+    City = city;
+    Country = country;
+    PaymentCurrency = payment_currency;
+    last_changed_at  as LastChangedAt;
+  }
+}
+
+Now apply the draft functionality to behavior definition.
+managed implementation in class zbp_bs_demo_rappartner unique;
+strict;
+with draft;
+
+define behavior for ZBS_I_RAPPartner alias Partner
+persistent table zbs_dmo_partner
+draft table zbs_dmo_partner_D
+lock master total etag LastChangedAt
+authorization master ( instance )
+late numbering
+etag master LastChangedAt
+{
+  create;
+  update;
+  delete( features : gloabl );
+
+  field ( readonly ) PartnerNumber;
+
+    draft action Resume;
+  draft action Edit;
+  draft action Activate;
+  draft action Discard;
+
+  draft determine action Prepare
+  {
+    validation validateKeyIsFilled;
+    validation validateCoreData;
+  }
+
+ validation validateKeyIsFilled on save { create; }
+  validation validateCoreData on save { create; field Country, PaymentCurrency; }
+
+  determination fillCurrency on modify { create; update; }
+
+  static action withPopup parameter ZBS_I_PopupEntity;
+  action ( features : instance ) fillEmptyStreets result [1] $self;
+  static action clearAllEmptyStreets;
+  factory action copyLine [1];
+
+  mapping for zbs_dmo_partner
+  {
+    PartnerNumber = partner;
+    PartnerName = name;
+    Street = street;
+    City = city;
+    Country = country;
+    PaymentCurrency = payment_currency;
+    last_changed_at  = LastChangedAt;
+  }
+}
+
+Projection View entity:
+___________________________
+
+projection;
+strict;
+use draft;
+
+define behavior for ZBS_C_RAPPartner alias Partner
+{
+  use create;
+  use update;
+  use delete;
+
+  use action fillEmptyStreets;
+  use action clearAllEmptyStreets;
+  use action copyLine;
+  use action withPopup;
+
+  use action Edit;
+  use action Activate;
+  use action Discard;
+  use action Prepare;
+  use action Resume;
+}
+ 

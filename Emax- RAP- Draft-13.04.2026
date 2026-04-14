@@ -1,0 +1,67 @@
+RAP Draft:
+
+What is the meaning of draft: 
+________________________________
+Implementing draft functionality in SAP RAP enables users to save incomplete, uncommitted data, 
+acting as an autosave feature (similar to Microsoft Word) using separate "shadow" tables. 
+It is activated by adding with draft to the behavior definition, creating a draft table, and using the edit action to copy active data to the draft table. 
+The RAP framework fully manages the draft lifecycle, including creation, saving, and activation.
+
+What is draft handling? --
+__________________________
+This is a technique to save the current status in the backend in a kind of shadow table for the user after each step. 
+The data is not initially in the table with the real data, 
+it is a working status of the changes. To do this, you have to create the shadow table and expand the RAP business object in a few places.
+
+
+
+Key Implementation Steps:
+____________________________
+- However, before we can get started with the change in the RAP, we need to create a prerequisite. 
+  A unique time stamp is required that describes the status of the last change, the so-called ETAG field. This must be present 
+  in every data table so that the system knows whether a data record has changed in the meantime. To do this, we add a new field to the partner table ZBS_DMO_PARTNER:
+
+- Behavior Definition (BDEF): Add with draft to the header and specify a draft table for the root entity.
+- Draft Table: Create a dictionary table (typically with _D suffix) to store draft data.
+- Behavior Projection: Add use draft in the projection file to expose functionality.
+- Actions: The framework provides automatic edit, save, and discard actions.
+- ETAG: Ensure a total ETAG field exists to detect data changes. 
+
+Tables: 
+___________
+@EndUserText.label : 'Partner Data'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #A
+@AbapCatalog.dataMaintenance : #RESTRICTED
+define table zbs_dmo_partner {
+  key client       : abap.clnt not null;
+  key partner      : abap.char(10) not null;
+  name             : abap.char(60);
+  street           : abap.char(80);
+  city             : abap.char(60);
+  country          : land1;
+  payment_currency : abap.cuky;
+  last_changed_at  : timestampl; // timestamp field added
+}
+
+At the end we add a new field "last_changed_at" with type "timestampl". This field will contain the information of the last change. After activating the table, 
+we still have to extend the view stack of the RAP object and accept the field. The interface view now looks like this:
+
+root view entity:ZBS_I_RAPPartner
+__________________
+define root view entity ZBS_I_RAPPartner
+  as select from zbs_dmo_partner
+{
+
+  key partner          as PartnerNumber,
+      name             as PartnerName,
+      street           as Street,
+      city             as City,
+      country          as Country,
+      payment_currency as PaymentCurrency,
+      last_changed_at  as LastChangedAt
+}
+
+
+

@@ -54,8 +54,32 @@ put cursor in updateStatus --> press - ctrl + 1 --> click on add method for acti
 
 class lhc_r_trav definition.
  methods: updateStatus for modify
+          importing keys  for action r_trav~updatestatus.
           
 endclass.
+
+keys - structure
+%cid type abp_behiv_cid
+%is_draft type abp_behiv_flag
+travelId - key
+%param - type zstatus_str. --> defined struture - this captured inputs data to action- %param-status- dyanmically
+
+class  lhc_r_trav implementatation.
+method updatestatus. // select the method name -- pres  f2- it will show all the importing and exporting parameter of themethod.
+modify entities of zr_trav in local mode entity r_trav 
+ update fields ( status ) with value #( for key in keys( %key-travelId  = key-travelId 
+                                                         status = key-%param-status ) )
+  reported data(lt_reported) failed data(lt_Failed) .
+
+endmethod.
+endclass.
+
+let activate all the process...
+
+in local mode - whenever implementing anything with respective to the  behavior implementation- we have to define the local mode
+when define all the eml operations - you have not defined the local word- because you are creating the seperate class and seperate implementation for that.
+there is no relationship between the behavior implementation and behavior defintion- that's y does not ask a local mode.
+
 
 save and activate all... 
 

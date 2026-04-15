@@ -1,0 +1,54 @@
+What is Draft:
+______________
+The draft features allows users to temporarily save changes to the BO, without immediately persisting them to the DB.
+Draft table is should be same as root entity- this is automatically create that.
+for enahncement of the root entity- -> added the new fields to exist root entity --> in draft table also add those fields explicitly.( recreate option will come if added new fields at root enity)
+- so last changed field added .. to draft table also.
+draft feature automatically handles to update the create/update/delete the records draft table.
+
+Odata V2 and Odata-v4 differnece:(Service Binding )
+__________________________________
+in Odata V2 managed scenario - Draft handling automatically...
+in Odata V4 managed scenario - Manually need to add for Draft handling...
+
+Scenario: Can i able to add draft functionality in Odata V4 binding?(With out draft)
+___________________________________________________________________
+in Odata v4 draft is the default transition pattern. if draft is not defined, the framework assumes read-only. means no create/update.. that's why buttons doon't showup.
+in Odata v4 - if draft functionality not availble then Fiori Apps show only the Read and delete functionality available.- in object page, unable to see the update functionality also.
+
+With draft:
+__________
+RAP amanges a temporarly "working copy" of the entity --> UI automatically shows create/Update/Save/cancel buttons.
+
+
+Steps to add the draft in v4:
+_________________________________
+1. with draft in behavior definition
+2. Defaine drat table - draft table <table> --> ctrl + 1 -->create draft table. add additonaly fields are "%admin"
+3. in draft, there might be a chance other user to edit that...- means defines the etag in behavir definition and add the time stamp field in root entity to lock the record - 
+ root enity - lastChangedat as timestampl.
+ lock master total etag lastchangedat.
+ 4. define draft actions: in behavior.
+ draft action Activate;
+ draft action Discard;
+ draft action Edit;
+ draft action Resume;
+ draft determine action prepare; 
+ 4. Expose the action into the projection behavior definition.
+  - use draft 
+  - use action activate
+   use action discard
+   use action Edit
+   use action Prepare
+    use action Resume
+
+
+    Now activate all the tables/ all behavior ss and execute your apps.
+
+    Now draft functioanlty will work...
+
+    odatav4 - url- sap/opu/odata4sap/<service>_v4_ui/srvd/sap/<service>/0001/
+
+    if you will get the error after done the nehnacment properly-- just unpublish -- > publish it... and test it.
+ 
+2. Draft actions- Edit/Discard/Activate

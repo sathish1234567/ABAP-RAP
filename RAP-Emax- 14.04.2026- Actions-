@@ -1,0 +1,69 @@
+- Actions- used for - Custom Button to add the exist Application.
+- Crud - operations handled by the behavior definition.
+- For custom button -? tells you action part.
+
+Actions- are custom buttons
+ |_ types of actions
+         |_ 1. Instance Actions(action).- Based on some action - it is goinng to trigger - for delete button enable - automatically once selct the record in list report. 
+             - select record - delte button enbaled- instance action.
+         |_ 2. Static Actions(Static action) -  for Create/Edit-  Excel upload button- every time has enabled- called as Static Actions.
+
+
+Actions are used for enhancement.
+
+Scenario: At a update the single record.- when i click on the button - popup will come or - selected records need to update.
+in Standard Rap -always update single record at a time.
+- Action- Multiple records at a time update.
+
+to create the button:
+_____________________
+                                                (fcode)                    Button desc
+For Action - @ui.lineItem { type: #for_action, dataaction: 'updatestatus', label:'Modify Status' } - 
+
+Behavior defintion for handler method:( for button action)
+____________________________________________
+Once complete to define the button, define the action for button in root behavior definition.- it generate method to be implemented for action.
+Once define the action and implement the piece of code ...  after this tell the projection behavior defition, to consume my action.
+
+in Projection behavior:
+_________________________
+Expose the action projection BDEF.
+
+Scenario:
+____________
+
+we ahve to create custom action, and when user select record and press the action- it has to open the popup.
+Desigining the popup- need to take the status field
+Whatever input i am assigning, if i give the status as 'C'- for all the records (selected) - update the status to 'C".- mass update.
+
+1. on top field:
+@UI.lineitem: [{ postion :20, type : #FOR_ACTION, dataAction: 'updateTask', label: 'Modify Status'}]- on first field only need to write .. - Buton appers at place of create button.
+
+copy the data action- 'UpdateStatus' -- 
+
+2. Go to the root entity- -behavior definition- add below code  and provide the inputs parmeter.
+define action: 
+action UpdateStatus parameter zstatus_Str; // create - dictionary structure- manually...
+
+define structure zstatus_Str{
+status : /dmo/travel_Status;
+}
+
+3. implement the action: 
+put cursor in updateStatus --> press - ctrl + 1 --> click on add method for action updateStatus of entity 'ztr_trav' in local class - lhc_r_trav inside the global class ZBP_R_TRAV.
+
+class lhc_r_trav definition.
+ methods: updateStatus for modify
+          
+endclass.
+
+save and activate all... 
+
+
+For static action- define with static action.
+For instance - define with Action only.
+How can i take the input to my custom action?
+______________________________________________
+
+
+

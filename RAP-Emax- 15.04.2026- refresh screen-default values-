@@ -1,5 +1,29 @@
 Action: to update the multiple records - click on ModifyStatus button.- when you providing the status on popup.
 
+zr_dbt_trav- root entity.
+ZDBT_TARV- Database table
+zstatus_str - structure
+
+
+define root view entity ZR_DBT_TRAV
+  as select from ZDBT_TRAV as r_dbttrav
+  {
+    kay travel_id as TravelID,
+    description as Description,
+    Status as Status,
+    @Semantics.systemDateTime.localInstanceLastChangedAt: true
+    lastchangedat as Lastchangedat
+    createdby as CreatedBy,
+    createdat as CreatedAt,
+    lastchangedBy as lastchangedby
+  }
+
+zstatus_str:
+____________
+define strucutre zstatus_str {
+  status : /dmo/travel_Status
+}
+
 defaine behavior for zr_dbt_trav alias R_DBT_TRAV
 persistent table ZDBT_TRAV
 extensible
@@ -141,6 +165,76 @@ _________
 now select records and  click on 'modifystatus' button --> provide status - E in popup --> click on update status..
 -- now records will update in db after that.. frontend side result will reflect immediate through the custom action.
 
+*********************************************************************
+*********************************************************************
+*********************************************************************
 
 
+Scenario: to provide multiple fields on popup -- on custom button action.
+___________________________________________________________________________
 
+Just add the one more field inside zstatus_Str.
+
+define structure zstatus_str
+{
+status : /dmo/travel_Status;
+description : /dmo/description;
+}
+
+output
+__________
+now refresh the screen from front end..  --> select multiple records --> click modifystatus button -->
+popup appears with two inout bixed 1. status 2. Description.
+and enter the data --> click on update...
+
+
+*********************************************************************
+*********************************************************************
+*********************************************************************
+
+Scenario: Button adding to each row.. - modify status button:
+_____________________________________________________________
+
+in projection view - go to custom action- -- use the --> inline :true in custom action ui annotation.
+custom action here is :
+@UI.lineItem: [{position: 10 type: #for_Action dataAction: 'UpdateStatus' label : 'ModifyStatus' inline true }].
+
+Now refresh the screen at front end --> check --> 'ModifyStatus' button added or not in each row.
+
+Ouput:
+__________
+'ModifyStatus'- button added on every record.
+
+
+*********************************************************************
+*********************************************************************
+*********************************************************************
+
+Scenario:
+Whenever going for the creation of a record- need to fill the default value in travelStatus UI input element in object page.
+________________________________________________________________________________________________________________________
+- to get the default values to ui elements- to implement the functions. and function name is - ' Deafult Function '
+- to implement that we have an option called as  -Deafult Function  and function name should be provide as per nameing guide lines.
+- Default function name is - 
+Ex:
+  for create : getdetafaultforCreate
+
+in behavior definition: 
+
+create : { default function GetDefaultForCreate ; ) -->select the method  ctrl + f1 --> click on 
+
+method definition for getdefaultforcreate:
+
+methods : getdefaultforcreate for read
+            importing keys for action R_DBT_TRAV~getdefaultforcreate result result.
+
+methond implementation:
+method getdefaultforcreate. // to get the interface of the method -- select the method - press f2 - it will show all the interface properties.
+  
+endmethod.
+
+default function parameters are -
+impporting keys type table for function import zr_dbt_Trav\\r_dbt_trav~getdefaultforcreate
+chnaging result type table for function result zr_dbt_Trav\\r_dbt_trav~getdefaultforcreate
+         failed type response for failed entity zr_dbt_Trav
+         reported type response for reported entity zr_dbt_Trav.

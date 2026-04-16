@@ -87,5 +87,60 @@ _________
 
 action UpdateStatus parameter zstatus_Str  result[1] $self;
 here:
-$self - it represents the current entity. means which entity return the results.
+$self - it represents the current entity. means which entity return   the results.
+
+class- changes-lhc_zr_dbt_trav
+__________________
+  methods : updatestatus for modify 
+            importing keys for action R_DBT_TRAV~UpdateStatus  result result. <-- add the result parameter in method interface
+
+Class implementations: after changing we got the ne value right.. in updatestatus method implementation.:
+________________
+  1. modify enitties --> update the data to DB- ZR_DBT_TRAV
+  2. after update the data - we have to immediately read the data using read enitities.
+  3. if you read selected entity, you will get the update value- whatever you are getting - you have to pass through that result parameter.
+
+  Dynamic value you to get : keys
+
+  read entities of zr_dbt_trav in local mode enitity r_dbt_Trav 
+  all fields with corresponding #( keys ) data( result ). --> once get the data -- i am move it into the result parameter- defined in interface.
+
+  result = lt_Result.( send key data in %tky )
+
+  Ex: 
+  class lhc_zr_dbt_trav definition inheriting from CL_ABAP_BEHAVIOR_HANDLER.
+    private section.
+      methods : update status for modify 
+                importing keys for action R_DBT_TRAV~updatestatus rsult reult.
+  endclass.
+
+  class lhc_zr_dbt_trav implementation.
+    method updatestatus.
+        // records updated in db.
+        modify entities of zr_dbt_trav in local mode entity r_dbt_trav
+        update fields ( Status )
+        with value #( for key in keys ( %key-TravelId = Key-TravelId
+                                        status = key-%param-status ) ) 
+        reported data( lt_reported )
+        failed data( lt_failed ).
+
+        // once updated- again read those records and send to the output.
+        read entities of zr_dbt_trav in local mode enitity r_dbt_Trav 
+        all fields with corresponding #( keys ) data( result ). 
+
+        result = value #( for ls_result in lt_Result( %tky = ls_result-%tky
+                                                      %param = ls_result ).
+
+    endmethod.
+  endclass.
+
+save and activate
+
+output:
+_________
+now select records and  click on 'modifystatus' button --> provide status - E in popup --> click on update status..
+-- now records will update in db after that.. frontend side result will reflect immediate through the custom action.
+
+
+
 

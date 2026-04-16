@@ -80,6 +80,15 @@ in local mode - whenever implementing anything with respective to the  behavior 
 when define all the eml operations - you have not defined the local word- because you are creating the seperate class and seperate implementation for that.
 there is no relationship between the behavior implementation and behavior defintion- that's y does not ask a local mode.
 
+Here... 
+What type of action - static action - now-- because we have not used thes action in projection behavior... if not used projection behavior.. it is the static action.
+Now consumed the action in projection- 
+
+in projection behavior definition:
+_________________________________
+use action updateStatus;
+
+Now run... and check... here-- modifyStatus button is disabled... and we have not selected records ... once selected records.. it will be enabled the button - as modifystatus.
 
 save and activate all... 
 

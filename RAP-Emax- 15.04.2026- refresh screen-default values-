@@ -222,6 +222,7 @@ Ex:
 in behavior definition: 
 
 create : { default function GetDefaultForCreate ; ) -->select the method  ctrl + f1 --> click on 
+// here you are implementing during create operation.
 
 method definition for getdefaultforcreate:
 
@@ -230,7 +231,7 @@ methods : getdefaultforcreate for read
 
 methond implementation:
 method getdefaultforcreate. // to get the interface of the method -- select the method - press f2 - it will show all the interface properties.
-  
+  append value #( %cid= keys[1]-%cid ) to result.  
 endmethod.
 
 default function parameters are -
@@ -238,3 +239,13 @@ impporting keys type table for function import zr_dbt_Trav\\r_dbt_trav~getdefaul
 chnaging result type table for function result zr_dbt_Trav\\r_dbt_trav~getdefaultforcreate
          failed type response for failed entity zr_dbt_Trav
          reported type response for reported entity zr_dbt_Trav.
+
+keys( internal table ) - components are -
+  |_ %cid type abp_behv_cid
+result- components are
+  |_ %cid
+  |_ %param
+        |_ enity fields are inherit here..
+              travelid, description, status, lastchangedat, createdby, createdat, lastchangedby.
+
+

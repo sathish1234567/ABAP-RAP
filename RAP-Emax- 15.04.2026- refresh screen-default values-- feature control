@@ -24,6 +24,36 @@ define strucutre zstatus_str {
   status : /dmo/travel_Status
 }
 
+Projection view:
+_____________
+projection implementation in calss zbp_c_dbt_Trav unique;
+
+strict( 2 );
+extensible ;
+use draft;
+use side effects;
+define behavior for zc_dbt_Trav alias r_dbt_trav
+extensible
+use etag
+{
+  use create;
+  use update;
+  use delete;
+
+  use action edit;
+  use action activate;
+  use action discard;
+  use action resume;
+  use action prepare;
+
+  uae action UpdateStatus;
+
+}
+____________________
+managed implementation in class z*********** unique;
+strict( 2 );
+with draft;
+extensible;
 defaine behavior for zr_dbt_trav alias R_DBT_TRAV
 persistent table ZDBT_TRAV
 extensible
@@ -231,8 +261,20 @@ methods : getdefaultforcreate for read
 
 methond implementation:
 method getdefaultforcreate. // to get the interface of the method -- select the method - press f2 - it will show all the interface properties.
-  append value #( %cid= keys[1]-%cid ) to result.  
+  append value #( %cid= keys[1]-%cid 
+                  %params-status = 'B' ) to result.  
 endmethod.
+
+save and active.- test. -- default value will not appear because -- need to expose the function in the projection view also.
+
+in projection view expose function : 
+{
+use function getdefaultforcreate;
+}
+
+save and activate test.. - now you get the data at ui level.
+
+when i click on create button-- >getdefaultcreate - method will trigger. to get the default values. on create action.
 
 default function parameters are -
 impporting keys type table for function import zr_dbt_Trav\\r_dbt_trav~getdefaultforcreate
@@ -247,5 +289,150 @@ result- components are
   |_ %param
         |_ enity fields are inherit here..
               travelid, description, status, lastchangedat, createdby, createdat, lastchangedby.
+
+
+Note : functions are limited to create operation only...
+if you want to provide default values on update operation-- we have another way....  i.e determination- concept..
+
+*********************************************************************
+*********************************************************************
+*********************************************************************
+
+scenario: in RAP- field should be read only.
+_______________________________
+
+in behavior definition:
+{
+field ( mandatory : create ) --> on create - traval id is mandatory
+travelId;
+
+field ( readonly ) -- > read only
+status;
+
+field ( readonly: update ) -- > read only
+travelId;
+}
+
+*********************************************************************
+*********************************************************************
+*********************************************************************
+Scenario: Can i enabled the action on specific conditions.? using feature control
+
+in fiori app -- initial load some of the buttons are disabled -- such as modify status/Delete actions are disabled..
+when i select the any record --> those buttons are automatically enabled. 
+
+but my requirement is when the travel status = 'B' then only modify status button should be enabled.
+
+Feature control: enable/disable...
+_______________
+you can define for custom action, create, update and delete.. and you can refer the individual fields also...
+
+ex: i want to make it read only... every time is make it read only...
+specific conditions also...
+
+in this feture control.. you can define it for your actions, fields... , for operations( standard operation- CRUD)
+
+we have  two differnt types of feature controls..
+1. static feature control  - without condtion - (features : global ) 
+2. dynamic/instance feature control- specific condition- (features : instance )
+
+static feature control: ( featurs : global )
+-  Global feature control.
+- it enables the all the things..
+- it enlables/ disables all the features irrespective of the confrions.
+- it should not enabled based on specific conditions.
+- if you implement this - it will geenrate the specific method: get_global_features is not implemented.
+  global class - zbp_r_dbt_trav --> local handler class - lhc_zt_dbt_trav.
+
+-
+Whenever you want any operation should be enabled/disabled as a gloablly-- 
+you have to implement the global feature menas static feature.
+
+specific operation enabled/ disabled --globally ... 
+ in behavior implementation:
+
+{
+
+create ( features : global )
+update ( feauters : global )
+delete ( features : global )
+
+}
+
+and define the method : get_global_features
+
+signature : 
+methods : get_global_features for global features
+          importing request request_features for r_dbt_trav result result.
+
+
+method implementation:
+
+method get_global_feature. -- select this - f2 get the all interface of this method.
+  
+  result-%update = if_Abap_behv~fc-o-disabled; (edit button disabledd)
+endmethod.
+
+output:
+__________
+in object page - - edit button disabled... not allowed any record to update globally... 
+Disabled the delete/edit buttons..
+
+get_global_features (Dynamic structure/components availble importing and changing )
+  |_ importing requested_features type structure for global features request zr_dbt_trav\\r_dbt_trav
+              here derived type dynamically changed -- suppose applied global feature for update- update appears.
+              if applied for 3 operations -- those all are appears here 
+              requested_features- components
+                |_ %update %create, %delete
+     changing result type structure for global features request zr_dbt_trav\\r_dbt_trav optional
+              reported type response for reported only zr_dbt_trav.
+
+if_Abap_behv~fc ( function code )
+            ~fc-o- function code - operation
+            ~fc-o-enabled( enabled the button ) type abp_behv_op_ctrl value '00'
+            ~fc-o-disabled( disabled the button ) type abp_behv_op_ctrl value '01'
+
+
+scanrio: i have to apply the enabled/disabled for specific condition based..- instance feaures...(Dynamic control )
+_____________________________________________________________________________
+
+in behavior definition:
+
+{
+
+delete( features : instance )  --> method :get_instance_features
+
+}
+
+methods signature:
+
+ methods : get_instance_features for instance features 
+           importing keys request requested_features for r_dbt_trav result result.
+
+      " here keys - not availble in global features, availbe in insatnce only.
+        keys - receives selected record data only.. based on keys you can enabled/disabled - actions.
+ Query-         |_ might not be availble - in feature means ? - query -- here both are same - so how to handle dynamic.
+
+
+
+method implementation:
+
+method get_instance_features.
+  reuslt-%delete = 
+endmethod.
+
+
+get_instance_features- components:
+ importing 
+  |_keys  type structure for instance features key zr_dbt_trav\\r_dbt_Trav
+  |_requested_features  type structure for instance features request zr_dbt_trav\\r_dbt_Trav
+ changing
+  |_ result type table for instance features result zr_dbt_trav\\r_dbt_Trav optional
+  |_failed type response for failed early zr_dbt_Trav
+  |_reported type response for reported early zr_dbt_Trav.
+  
+
+
+
 
 

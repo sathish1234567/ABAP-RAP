@@ -1,0 +1,91 @@
+Action: to update the multiple records - click on ModifyStatus button.- when you providing the status on popup.
+
+defaine behavior for zr_dbt_trav alias R_DBT_TRAV
+persistent table ZDBT_TRAV
+extensible
+draft table ZDBT_TRAV_D
+etag master LastchangedAt
+lock master total etag LastchangedAt
+authotization master( global )
+{
+
+  field ( mandatory : create )
+    TravelID;
+
+  field (readonly )
+    Lastchengedat;
+
+  field( readonly : update )
+   TravelID;
+
+  create:
+  update;
+  delete;
+
+  draft action  Activate optimized;
+  draft action Discard;
+  draft action Edit;
+  draft action Resume;
+  draft determine action Prepare;
+  action UpdateStatus parameter zstatus_str  --> ctrl + 1 --> create structure
+
+  mapping for zdbt_trav corresponding extensible 
+  { 
+    TravelID = TRAVEL_ID;
+    Description = DESCRIPTION;
+    status = STATUS;
+    Lastchangedat = LASTCHANGEDAT;
+    CreatedBy = CREATEDBY;
+    Lastchangedby = LASTCHANGEDBY;
+
+  }
+  }
+
+behavior implementation class:
+_____________________________
+
+class lhc_zr_dbt_trav definition inheriting from cl_abap_behavior_handler.
+private section.
+  methods : get_global_authentications for global authorization
+            importing request requested_authorizations for r_dbt_Trav
+            result result,
+
+            updatestatus for modify
+                importing keys for action R_DBT_TRAV~UpdateStatus .
+endclass.
+class lhc_zr_dbt_trav implementation.
+  method get_global_authentications.
+  endmethod.
+
+  method updatestatus.
+    modify entities of zr_dbt_trav in local mode entity r_dbt_trav
+    update fields ( Status )
+    with value #( for key in keys ( %key-TravelId = Key-TravelId
+                                    status = key-%param-status ) ) 
+    reported data( lt_reported )
+    failed data( lt_failed ).
+  endmethod.
+endclass.
+
+Output:
+Selected 2 records from output --> clikc on modify status --> popup appears -- with status - T( input value ) -- 
+clikc on modifystatus button --> it will update the status 'T" to selected records. 
+Travel status updated 'T' with multiple records.
+
+Scenario:
+_________________
+- after updation - currently our travel status is 'T'- when i am trying to update - to 'R', -- clikc on modify status -->
+immediately the result after updation od db will not return immediately to the UI, --> it will return when click on "GO' button.
+Once click on GO button- 'R" update...
+
+but these functionality we have to overwrite -- after clicking on ModifyStatus button --> 
+data should be update and immediately visible to the user at ui level ( Not required to click the GO button)
+
+Solution:
+_________
+- need to add the result paramenter in action.- means whetever updated values to the return- immediately.
+
+action UpdateStatus parameter zstatus_Str  result[1] $self;
+here:
+$self - it represents the current entity. means which entity return the results.
+

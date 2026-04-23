@@ -1,0 +1,104 @@
+Numbering:
+
+-//  field ( readolny : update )-
+ //  TravelId 
+-  key fields travelId should be flaged as read only or readonly update.. --> means - framwwork itself update the numbering part...
+-  read only means - should not editable means frame work has to be generated with new id - should not be enter the travel id -- this is automatically geenrates.
+
+Numbering setting values of primary key fields of entity.- you can't change the key field data in the BO.
+there are vearious way to handle the key fields data- numbering .. this is classfies 
+  |_ 2 types 
+        |_ Early numbering- During the interactive phase auto id should be populated 
+        |_ Late numbering- When user clikc on save button( save phase) 
+              |_ when we are going with later numbering- our application/BO has not contain the draft capabilties. ---> use the UUID then it allows to create the late numbering(Query)
+              
+
+        purpose of both numberings are same..
+        Diff is  - When you want to generate the number on SAVE face...-- > when you execute the http method -- > auto number will generate
+        When : 
+        1. Number will geenrate On save face
+        2. NUmber will generate before it got into the SAVE face.
+
+
+Early Numbering:
+_________________
+on premises- SNRO- use FM- Number_get_NEXT
+- BTP - in behavior definition:
+mangaed implementation in class ZBP_R_TBTRAV000 unique;
+stricit (2);
+with draft;
+....
+...
+..
+early numbering
+..{
+
+field (readonly ) travelId;
+
+create;
+update;
+delete;
+....
+......
+}
+
+1. define the EARLY NUMBERING --> whenever define the early numbering -- a specific method will generate in BP class(Globally) -- 
+   Once add in behavior -- need to save and activae the behavior definition.
+
+   Warning message : during the create; --> Early numbering for create ZR_TBTRAV000 is not implemented.
+   select the create; --> select CTRL + 1 and Enter -- it is navigating to the LHC_ZR_TBTRAV000 class and method earlynumbering_Create - created.
+
+    for number range - we have the standard class and method -
+                          |_number range - /dmo/trv_m
+                          |_ class - cl_numberrange_runtime 
+                                        |_number_get
+ in behavior pool   ZBP_R_TBTRAV000
+    local handler class -|_LHC_ZR_TBTRAV000 - method added class definition and implementation.
+
+    class LHC_ZR_TBTRAV000 definiton inheriting from cl_abap_behavior_handler.
+      private section.
+        methods :
+        get_global_authorizations for gloabl authorizatio
+            importing request requested_authorization for zrtbtrav000
+            result result,
+
+        earlynumbering_create for numbering 
+           importing entities for create zrtbtrav000.
+
+     endclass.
+
+    class LHC_ZR_TBTRAV000 implementation.
+      method get_global_authorizations.
+    
+      endmethod.
+
+      method earlynumbering_create. // -->select the method -- press f2.
+        // methods parameters
+           importing - entites type table of create ZR_TBTRAV000/zrtbtrav000 - 
+                         |_%cid, %is_draft, entity fields ... %control
+           changing -  mapped  type response for mapped early ZR_TBTRAV000
+                       failed  type response for failed early ZR_TBTRAV000
+                       reported type response for reported early ZR_TBTRAV000.
+        // if want to return the key feilds data-- you have to returns into  the mapped parameter data..
+        // code
+        // shift + enter --> get all the parameters of the method
+        cl_numberrange_runtime=>number_get(
+            exporting
+                nr_range_nr = '01'
+                object = '/DMO/TRV_M'
+            importing 
+                number = data(lv_travel_id) ). --> // now travel_id - is mapped to the mapped parameter, then it reflect into the UI level.
+
+          // fill mapped parameter.
+          loop at entities into data(wa_entity).
+              if wa_entity-travlid is initial.
+                  append value #( %cid = wa_entity-%cid  %key = wa_entity-%key ) to mapped-zrbtrav000.
+              else.
+                  append value #( %cid = wa_entity-%cid  %key = wa_entity-%key ) to mapped-zrbtrav000.
+              endif.
+          endloop.
+                       
+      endmethod.
+    endclass.
+
+    save and activate. - run the service binding...

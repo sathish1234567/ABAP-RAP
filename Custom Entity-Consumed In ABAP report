@@ -1,0 +1,132 @@
+Custom Entity-Consumed In ABAP report:
+___________________________________________
+
+Here’s how to consume a RAP custom entity with parameters from an ABAP report: pass parameters into a shared class method (same logic the custom entity uses).
+
+01. Custom entity:
+@EndUserText.label: 'Products by Plant'
+@ObjectModel.query.implementedBy: 'ABAP:ZCL_CE_PRODUCTS'
+define custom entity ZCE_PRODUCTS
+  with parameters
+    p_plant : werks_d,
+    p_max   : abap.int4
+{
+  key ProductId   : matnr;
+      Plant       : werks_d;
+      ProductName : maktx;
+}
+
+
+In OData/Fiori the URL looks like: .../ZCE_PRODUCTS(p_plant='1000',p_max=50)/Set
+(exact path depends on binding).
+
+02. Query class — parameters + report reuse
+
+CLASS zcl_ce_products DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC.
+
+  PUBLIC SECTION.
+    INTERFACES if_rap_query_provider.
+
+    TYPES: BEGIN OF ty_product,
+             productid   TYPE matnr,
+             plant       TYPE werks_d,
+             productname TYPE maktx,
+           END OF ty_product.
+    TYPES tt_product TYPE STANDARD TABLE OF ty_product WITH EMPTY KEY.
+
+    CLASS-METHODS get_products
+      IMPORTING
+        iv_plant       TYPE werks_d
+        iv_max         TYPE i DEFAULT 100
+      RETURNING
+        VALUE(rt_data) TYPE tt_product.
+
+ENDCLASS.
+
+CLASS zcl_ce_products IMPLEMENTATION.
+
+  METHOD get_products.
+    DATA lv_max TYPE i.
+
+    lv_max = iv_max.
+    IF lv_max <= 0.
+      lv_max = 100.
+    ENDIF.
+
+    SELECT a~matnr AS productid,
+           a~werks AS plant,
+           t~maktx AS productname
+      FROM marc AS a
+      INNER JOIN makt AS t
+        ON  t~matnr = a~matnr
+       AND t~spras = @sy-langu
+      WHERE a~werks = @iv_plant
+      INTO CORRESPONDING FIELDS OF TABLE @rt_data
+      UP TO @lv_max ROWS.
+  ENDMETHOD.
+
+  METHOD if_rap_query_provider~select.
+    DATA lt_data   TYPE tt_product.
+    DATA lv_plant  TYPE werks_d.
+    DATA lv_max    TYPE i.
+    DATA lt_params TYPE if_rap_query_request=>tt_parameters.
+    DATA ls_param  LIKE LINE OF lt_params.
+
+    "--- Read CDS parameters from RAP request
+    lt_params = io_request->get_parameters( ).
+
+    READ TABLE lt_params INTO ls_param WITH KEY name = 'P_PLANT'.
+    IF sy-subrc = 0.
+      lv_plant = ls_param-value.
+    ENDIF.
+
+    READ TABLE lt_params INTO ls_param WITH KEY name = 'P_MAX'.
+    IF sy-subrc = 0.
+      lv_max = ls_param-value.
+    ELSE.
+      lv_max = io_request->get_paging( )->get_page_size( ).
+    ENDIF.
+
+    IF lv_plant IS INITIAL.
+      " optional: raise / return empty
+      io_response->set_data( lt_data ).
+      RETURN.
+    ENDIF.
+
+    lt_data = get_products(
+                iv_plant = lv_plant
+                iv_max   = CONV i( lv_max ) ).
+
+    io_response->set_data( lt_data ).
+
+    IF io_request->is_total_numb_of_rec_requested( ).
+      io_response->set_total_number_of_records( lines( lt_data ) ).
+    ENDIF.
+  ENDMETHOD.
+
+ENDCLASS.
+
+03. ABAP report — pass parameters manually
+REPORT z_consume_ce_products.
+
+PARAMETERS: p_werks TYPE werks_d OBLIGATORY,
+            p_max   TYPE i DEFAULT 50.
+
+DATA: lt_data TYPE zcl_ce_products=>tt_product,
+      lo_alv  TYPE REF TO cl_salv_table.
+
+START-OF-SELECTION.
+  lt_data = zcl_ce_products=>get_products(
+              iv_plant = p_werks
+              iv_max   = p_max ).
+
+  cl_salv_table=>factory(
+    IMPORTING r_salv_table = lo_alv
+    CHANGING  t_table      = lt_data ).
+
+  lo_alv->display( ).
+
+
